@@ -1,27 +1,32 @@
+#[macro_use]
+extern crate log;
+
 use std::sync::Arc;
 use dotenv::dotenv;
-use teloxide::{Bot, dptree};
-use teloxide::dispatching::UpdateFilterExt;
-use teloxide::prelude::Dispatcher;
-use teloxide::types::Update;
+use teloxide::adaptors::DefaultParseMode;
+use teloxide::prelude::*;
+use teloxide::types::ParseMode;
 use crate::bot::MessageHandler;
 use crate::coub::CoubClient;
 
 mod bot;
 mod coub;
-mod ffmpeg;
-
 
 pub struct Application {
     coub_client: CoubClient,
-    bot: Bot
+    bot: DefaultParseMode<Bot>,
+    receiver: i64,
 }
 
 impl Application {
     pub fn new() -> Self {
         Self {
             coub_client: CoubClient::new(),
-            bot: Bot::from_env(),
+            bot: Bot::from_env().parse_mode(ParseMode::Html),
+            receiver: std::env::var("RECEIVER")
+                .expect("Необходимо указать получателя, кому отправлять все кубы!")
+                .parse::<i64>()
+                .expect("Неверный ID поллучателя кубов!"),
         }
     }
 }
@@ -39,13 +44,15 @@ async fn main() {
 
     let app = Arc::new(Application::new());
 
+    info!("Starting dispatch...");
+
     Dispatcher::builder(app.bot.clone(), dptree::entry()
-        .branch(
-            Update::filter_message().endpoint(MessageHandler::handle),
-        ))
+        .branch(Update::filter_message().endpoint(MessageHandler::handle)))
         .dependencies(dptree::deps![Arc::clone(&app)])
         .enable_ctrlc_handler()
         .build()
         .dispatch()
         .await;
+
+    info!("Good Bye!");
 }

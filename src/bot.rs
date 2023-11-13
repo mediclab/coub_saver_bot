@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use regex::Regex;
-use teloxide::types::{InputFile, Message};
+use teloxide::types::{InputFile, Message, User};
 use crate::Application;
 use anyhow::Result;
-use teloxide::prelude::Requester;
+use teloxide::payloads::SendVideoSetters;
+use teloxide::prelude::{ChatId, Requester};
 
 pub struct MessageHandler {
     pub app: Arc<Application>,
@@ -23,10 +24,21 @@ impl MessageHandler {
             let api_url = format!("https://coub.com/api/v2/coubs/{}", &caps["id"]);
 
             if let Some(url) = app.coub_client.get_file_url(api_url).await {
-                app.bot.send_video(msg.chat.id, InputFile::url(url.parse()?)).await?;
+                app.bot.send_video(ChatId(app.receiver), InputFile::url(url.parse()?))
+                    .caption(format!("💥 Пользователь {} прислал новый куб!", get_user_text(msg.from().unwrap())))
+                    .await?;
+
+                app.bot.send_message(msg.chat.id, "💥 О, спасибо. Отправил куб на модерацию админу").await?;
             }
         }
 
         Ok(())
+    }
+}
+
+pub fn get_user_text(user: &User) -> String {
+    match &user.username {
+        Some(uname) => format!("@{uname}"),
+        None => format!("<a href=\"{}\">{}</a>", user.url(), user.first_name),
     }
 }
