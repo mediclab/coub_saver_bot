@@ -1,0 +1,37 @@
+name: Docker Image CI
+
+on:
+  release:
+    types: [published]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set version from Cargo.toml
+        run: |
+          echo "app_version=$(cat Cargo.toml | grep -A3 '^\[package\]$' | grep -Po '(?<=^version = ")[^"]*(?=".*)' | tr -dc 0-9)"  >> $GITHUB_ENV
+          echo "tag_version=$(echo ${{ github.event.release.tag_name }} | tr -dc 0-9)" >> $GITHUB_ENV
+      - name: Check versions
+        if: ${{ env.tag_version != env.app_version }}
+        run: |
+          echo "::error::Tag version = ${{ env.tag_version }} is not equals version from Cargo.toml = ${{ env.app_version }}"
+          exit 1
+      - name: Build the Docker image
+        env:
+          HOST: ${{ secrets.DOCKER_HOME_HOST }}
+        run: |
+          docker build . --file Dockerfile-prod --tag $HOST/mediclab/coub_saver_bot:${{ github.event.release.tag_name }} --tag $HOST/mediclab/coub_saver_bot:latest
+      - name: Push image to Private Docker
+        env:
+          DOCKER_PASSWD: ${{ secrets.DOCKER_HOME_PASSWORD }}
+          DOCKER_LOGIN: ${{ secrets.DOCKER_HOME_LOGIN }}
+          HOST: ${{ secrets.DOCKER_HOME_HOST }}
+        run: |
+          echo "$DOCKER_PASSWD" | docker login --username "$DOCKER_LOGIN" --password-stdin $HOST
+          docker push -a $HOST/mediclab/coub_saver_bot
