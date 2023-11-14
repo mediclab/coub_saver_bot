@@ -1,10 +1,9 @@
+use crate::Application;
 use std::sync::Arc;
 use regex::Regex;
-use teloxide::types::{InputFile, Message, User};
-use crate::Application;
 use anyhow::Result;
-use teloxide::payloads::SendVideoSetters;
-use teloxide::prelude::{ChatId, Requester};
+use teloxide::prelude::*;
+use teloxide::types::{InputFile, User};
 
 pub struct MessageHandler {
     pub app: Arc<Application>,
