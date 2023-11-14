@@ -1,13 +1,13 @@
 #[macro_use]
 extern crate log;
 
-use std::sync::Arc;
+use crate::bot::MessageHandler;
+use crate::coub::CoubClient;
 use dotenv::dotenv;
+use std::sync::Arc;
 use teloxide::adaptors::DefaultParseMode;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
-use crate::bot::MessageHandler;
-use crate::coub::CoubClient;
 
 mod bot;
 mod coub;
@@ -46,13 +46,15 @@ async fn main() {
 
     info!("Starting dispatch...");
 
-    Dispatcher::builder(app.bot.clone(), dptree::entry()
-        .branch(Update::filter_message().endpoint(MessageHandler::handle)))
-        .dependencies(dptree::deps![Arc::clone(&app)])
-        .enable_ctrlc_handler()
-        .build()
-        .dispatch()
-        .await;
+    Dispatcher::builder(
+        app.bot.clone(),
+        dptree::entry().branch(Update::filter_message().endpoint(MessageHandler::handle)),
+    )
+    .dependencies(dptree::deps![Arc::clone(&app)])
+    .enable_ctrlc_handler()
+    .build()
+    .dispatch()
+    .await;
 
     info!("Good Bye!");
 }
