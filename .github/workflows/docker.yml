@@ -14,11 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set version from Cargo.toml
+      - name: Get version from Cargo.toml
         run: |
           echo "app_version=$(cat Cargo.toml | grep -A3 '^\[package\]$' | grep -Po '(?<=^version = ")[^"]*(?=".*)')" >> $GITHUB_ENV
+
+      - name: Set versions to env
+        run: |
           echo "check_version=$(echo ${{ env.app_version }} | tr -dc 0-9)"  >> $GITHUB_ENV
           echo "tag_version=$(echo ${{ github.event.release.tag_name }} | tr -dc 0-9)" >> $GITHUB_ENV
+
       - name: Check versions
         if: ${{ env.tag_version != env.check_version }}
         run: |
