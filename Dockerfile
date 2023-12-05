@@ -13,6 +13,12 @@ RUN cargo build --release
 
 FROM alpine:latest
 
+ARG BOT_VERSION=unknown
+
+LABEL org.opencontainers.image.authors="mediclab"
+LABEL version=$BOT_VERSION
+LABEL description="Bot for saving coub videos from URL"
+
 COPY --from=builder /app/target/release/coub_saver_bot /usr/local/bin/coub_saver_bot
 
 RUN apk --no-cache add ca-certificates openssl libgcc libstdc++ \
