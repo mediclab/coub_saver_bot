@@ -44,7 +44,7 @@ impl MessageHandler {
                         .send_video(ChatId(self.app.receiver), InputFile::url(url.parse()?))
                         .caption(format!(
                             "💥 Пользователь {} прислал новый куб!",
-                            get_user_text(self.msg.from().unwrap())
+                            get_user_text(self.msg.from.as_ref().unwrap())
                         ))
                         .await?;
 
